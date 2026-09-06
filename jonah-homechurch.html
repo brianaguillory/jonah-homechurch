@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Church — The Book of Jonah</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #e4e0d8;
+    --text: #1a1a1a;
+    --text-muted: #6b6460;
+    --accent: #1a5f7a;
+    --accent-light: #e8f4f8;
+    --accent-mid: #2d8ba8;
+    --done-bg: #f0faf4;
+    --done-border: #b8dfc8;
+    --done-text: #4a8c63;
+    --today-dot: #e07b39;
+    --week-label: #8a7e78;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #0d3d52 0%, #1a6680 60%, #2390a8 100%);
+    color: #fff;
+    padding: 40px 20px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23ffffff08' d='M0,60 C360,100 720,20 1080,60 C1260,80 1380,50 1440,60 L1440,120 L0,120Z'/%3E%3Cpath fill='%23ffffff05' d='M0,40 C240,80 480,10 720,50 C960,90 1200,20 1440,40 L1440,120 L0,120Z'/%3E%3C/svg%3E") bottom/cover no-repeat;
+    pointer-events: none;
+  }
+  .home-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 10px;
+  }
+  header h1 {
+    font-size: clamp(26px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  header .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    max-width: 440px;
+    margin: 0 auto 20px;
+    line-height: 1.5;
+  }
+  .progress-bar-wrap { max-width: 320px; margin: 0 auto; }
+  .progress-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+  .progress-bar-bg { height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: rgba(255,255,255,0.85); border-radius: 4px; transition: width 0.4s ease; width: 0%; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .controls button {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .controls button:hover { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); }
+  .controls button.danger:hover { background: #fff5f5; border-color: #f5a0a0; color: #c0392b; }
+
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  .week {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .week-header:hover { background: #faf9f7; }
+  .week-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .week-num { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--week-label); }
+  .week-title { font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .week-right { display: flex; align-items: center; gap: 12px; }
+  .week-count { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .week-count.complete { color: var(--done-text); font-weight: 600; }
+  .week-chevron { font-size: 14px; color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+  .week.open .week-chevron { transform: rotate(90deg); }
+  .week-body { display: none; }
+  .week.open .week-body { display: block; }
+
+  .day-card {
+    border-top: 1px solid var(--border);
+    padding: 20px;
+    transition: background 0.2s;
+  }
+  .day-card.is-done { background: var(--done-bg); }
+  .day-card.is-today { background: #fffbf7; }
+
+  .day-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .passage { font-size: 13px; font-weight: 700; color: var(--accent); }
+  .day-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+  }
+  .badge-today { background: var(--today-dot); color: #fff; }
+  .badge-day { background: var(--border); color: var(--text-muted); }
+  .badge-done { background: var(--done-border); color: var(--done-text); }
+
+  .day-summary { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.5; margin-bottom: 14px; }
+  .day-card.is-done .day-summary { color: var(--text-muted); }
+
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--accent-light); }
+
+  .reflect-list { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 8px; }
+  .reflect-list li { font-size: 14px; color: var(--text); line-height: 1.55; padding-left: 14px; position: relative; }
+  .reflect-list li::before { content: '›'; position: absolute; left: 0; color: var(--accent-mid); font-weight: 700; }
+  .day-card.is-done .reflect-list li { color: var(--text-muted); }
+
+  .pray-block {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent-mid);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+  .day-card.is-done .pray-block { background: var(--done-bg); border-left-color: var(--done-border); color: var(--done-text); }
+
+  .mark-btn {
+    font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 20px;
+    border: none; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mark-btn.undone { background: var(--accent); color: #fff; }
+  .mark-btn.undone:hover { background: #154e66; }
+  .mark-btn.done-btn { background: var(--done-bg); color: var(--done-text); border: 1px solid var(--done-border); }
+  .mark-btn.done-btn:hover { background: #d4f0e0; }
+
+  .all-done { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 15px; display: none; }
+  .all-done.show { display: block; }
+
+  @media (max-width: 480px) {
+    .day-card { padding: 16px; }
+    .week-header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="home-label">Home Church</div>
+  <h1>The Book of Jonah</h1>
+  <p class="subtitle">A 4-week devotional through running, repenting, obeying, and learning to want what God wants.</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-label" id="progress-label">0 of 28 days complete</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  </div>
+</header>
+
+<div class="controls">
+  <button onclick="goToToday()">Go to today</button>
+  <button onclick="expandAll()">Expand all</button>
+  <button onclick="collapseAll()">Collapse all</button>
+  <button class="danger" onclick="resetProgress()">Reset progress</button>
+</div>
+
+<main id="main">
+
+  <!-- ═══════════════ WEEK 1 ═══════════════ -->
+  <section class="week open" data-week="1">
+    <div class="week-header" onclick="toggleWeek(this)">
+      <div class="week-meta">
+        <span class="week-num">Week 1 · Jonah 1:1–10</span>
+        <span class="week-title">The Call You Already Know</span>
+      </div>
+      <div class="week-right">
+        <span class="week-count" id="wc-1">0 / 7</span>
+        <span class="week-chevron">▶</span>
+      </div>
+    </div>
+    <div class="week-body">
+
+      <div class="day-card" data-day="1">
+        <div class="day-meta"><span class="passage">Jonah 1:1</span><span class="day-badge badge-today">Today</span></div>
+        <p class="day-summary">"The word of the Lord came to Jonah." God speaks first. That's how it always starts.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>When has God's word come to you in a way you couldn't ignore — even if you tried?</li>
+          <li>What does it mean that God initiates? He comes to Jonah, not the other way around.</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, you are the one who speaks first. Thank you for not waiting until I was ready. Speak to me again today — I'm listening.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 1)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="2">
+        <div class="day-meta"><span class="passage">Jonah 1:2</span><span class="day-badge badge-day">Day 2</span></div>
+        <p class="day-summary">God calls Jonah to Nineveh — the great, wicked city that Jonah's people feared and despised.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Is there a "Nineveh" in your life — a person, place, or situation God is calling you toward that you'd rather avoid?</li>
+          <li>Why do you think God sends his people toward the hard places instead of around them?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, show me the hard place you're calling me toward. Give me the courage not to flinch before I even start moving.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 2)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="3">
+        <div class="day-meta"><span class="passage">Jonah 1:3</span><span class="day-badge badge-day">Day 3</span></div>
+        <p class="day-summary">Jonah gets up — and goes the opposite direction. He pays the fare and boards a ship to Tarshish.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Where are you running right now — and are you spending real resources (time, money, energy) to fuel it?</li>
+          <li>What does your Tarshish look like — the destination you choose when you don't want to deal with what God is saying?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, I know what you're asking. I've been packing bags instead of obeying. I'm turning around — even if it's scary.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 3)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="4">
+        <div class="day-meta"><span class="passage">Jonah 1:4–5a</span><span class="day-badge badge-day">Day 4</span></div>
+        <p class="day-summary">God sends a great wind. The storm is so violent the sailors are terrified — and they're experienced sailors.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Has God ever sent a "storm" that made it obvious you were going the wrong way? What was it?</li>
+          <li>Where in your life right now is there turbulence that might be more than coincidence?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, don't let me be so stubborn that you have to send a hurricane. Open my eyes to the smaller signals before the storm gets worse.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 4)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="5">
+        <div class="day-meta"><span class="passage">Jonah 1:5b–6</span><span class="day-badge badge-day">Day 5</span></div>
+        <p class="day-summary">The sailors pray. The captain finds Jonah asleep below deck. "Get up and call on your God!"</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Where are you 'asleep below deck' — numb or checked out — while chaos grows around you?</li>
+          <li>Have unbelievers ever called you to pray when you were the one who should have been leading in prayer?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Wake me up, God. I don't want to sleep through what you're doing. Make me someone who prays when it matters — not last.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 5)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="6">
+        <div class="day-meta"><span class="passage">Jonah 1:7–8</span><span class="day-badge badge-day">Day 6</span></div>
+        <p class="day-summary">The sailors cast lots. The lot falls on Jonah. "Who are you? What have you done?"</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>What happens when what's hidden about you gets exposed? How do you usually respond?</li>
+          <li>Is there something God is surfacing in your life right now that you've been hoping would stay buried?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, you already see everything hidden. Search me. Bring it into the light — I'd rather face it now than let it keep causing damage.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 6)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="7">
+        <div class="day-meta"><span class="passage">Jonah 1:9–10</span><span class="day-badge badge-day">Day 7</span></div>
+        <p class="day-summary">Jonah tells the truth: "I am a Hebrew, and I fear the Lord, the God of heaven, who made the sea and the dry land." The sailors are terrified.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>There's a gap between what Jonah says he believes ("I fear the Lord") and what he's been doing. Where is that gap in your life?</li>
+          <li>What does it mean to fear a God who made the sea — and then try to run across that same sea?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, close the gap between what I say I believe and how I actually live. I don't want my actions to make my theology look like a lie.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 7)">Mark done</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ WEEK 2 ═══════════════ -->
+  <section class="week" data-week="2">
+    <div class="week-header" onclick="toggleWeek(this)">
+      <div class="week-meta">
+        <span class="week-num">Week 2 · Jonah 1:11–2:10</span>
+        <span class="week-title">Grace at the Bottom</span>
+      </div>
+      <div class="week-right">
+        <span class="week-count" id="wc-2">0 / 7</span>
+        <span class="week-chevron">▶</span>
+      </div>
+    </div>
+    <div class="week-body">
+
+      <div class="day-card" data-day="8">
+        <div class="day-meta"><span class="passage">Jonah 1:11–14</span><span class="day-badge badge-day">Day 8</span></div>
+        <p class="day-summary">The sailors don't want to throw Jonah in. They row harder first. They beg God not to hold them guilty for an innocent man's blood.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>These pagan sailors show more moral wrestling than the prophet does. What does that challenge you to think about?</li>
+          <li>Where have you seen unexpected integrity or compassion from people you wouldn't expect it from?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, keep me humble. Don't let me assume I'm the one with the right heart just because I know the right words. Make me genuinely good, not just officially religious.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 8)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="9">
+        <div class="day-meta"><span class="passage">Jonah 1:15–16</span><span class="day-badge badge-day">Day 9</span></div>
+        <p class="day-summary">Jonah goes overboard. The sea goes calm. The sailors offer sacrifices and make vows to God — on the spot.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>God used Jonah's failure to bring a crew of sailors to worship. Have you ever watched God do something good through your mess?</li>
+          <li>What does it do to your pride to know God can work in spite of you, not just through you?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Lord, use my story — even the parts I'm ashamed of. Don't waste any of it. Let people find you even through what I've gotten wrong.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 9)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="10">
+        <div class="day-meta"><span class="passage">Jonah 1:17</span><span class="day-badge badge-day">Day 10</span></div>
+        <p class="day-summary">God appointed a great fish to swallow Jonah. He was in the belly three days and three nights — not dead, just held.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>The fish isn't punishment — it's rescue. Where has God's discipline in your life actually been protection?</li>
+          <li>What "belly of the fish" moment have you been through — a hard, dark, enclosed season that turned out to be God holding you?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Father, even my hard seasons are your mercy. You didn't let me drown. Thank you for the fish — even the ones that felt like punishment.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 10)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="11">
+        <div class="day-meta"><span class="passage">Jonah 2:1–4</span><span class="day-badge badge-day">Day 11</span></div>
+        <p class="day-summary">Inside the fish, Jonah finally prays. Rock bottom is where he remembers to look up.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>How long does it usually take you to pray when things go sideways — days, weeks, or are you still waiting?</li>
+          <li>What is it about rock bottom that makes prayer finally feel necessary instead of optional?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">I called from my distress, and you heard me. Teach me to call sooner — before the fish, not inside it. I don't want to wait for rock bottom anymore.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 11)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="12">
+        <div class="day-meta"><span class="passage">Jonah 2:5–7</span><span class="day-badge badge-day">Day 12</span></div>
+        <p class="day-summary">"The waters closed in over me... yet you brought up my life from the pit, O Lord my God."</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Jonah is praying out of past-tense faith — remembering what God has done even while still in the fish. Can you do that right now?</li>
+          <li>What has God already brought you up from that you need to remember today?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">You brought up my life from the pit before. You are doing it again, even when I can't feel it yet. I choose to remember your faithfulness right now.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 12)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="13">
+        <div class="day-meta"><span class="passage">Jonah 2:8–9</span><span class="day-badge badge-day">Day 13</span></div>
+        <p class="day-summary">"Those who cling to worthless idols forfeit the grace that could be theirs. But I will sacrifice to you with a voice of thanksgiving. Salvation belongs to the Lord."</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>What worthless idols — things you cling to instead of God — are costing you grace right now?</li>
+          <li>Jonah worships before anything has changed externally. What would it look like to thank God today, even before the fish opens?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Salvation belongs to you — not my plan, not my performance, not my comfort. I let go of the things I've been clutching. You are enough.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 13)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="14">
+        <div class="day-meta"><span class="passage">Jonah 2:10</span><span class="day-badge badge-day">Day 14</span></div>
+        <p class="day-summary">God speaks to the fish. The fish vomits Jonah onto dry land. Three words. The fish obeys.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>God delivered Jonah before Jonah had done anything he was sent to do. What does that say about why God delivers us?</li>
+          <li>What 'shore' is God depositing you on right now — and are you willing to get up and walk toward what's next?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">You restore even the ones who ran. I'm on the shore. I'm getting up. Walk with me toward what you called me to — I'm not going back to the boat.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 14)">Mark done</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ WEEK 3 ═══════════════ -->
+  <section class="week" data-week="3">
+    <div class="week-header" onclick="toggleWeek(this)">
+      <div class="week-meta">
+        <span class="week-num">Week 3 · Jonah 3:1–10</span>
+        <span class="week-title">The Second Chance</span>
+      </div>
+      <div class="week-right">
+        <span class="week-count" id="wc-3">0 / 7</span>
+        <span class="week-chevron">▶</span>
+      </div>
+    </div>
+    <div class="week-body">
+
+      <div class="day-card" data-day="15">
+        <div class="day-meta"><span class="passage">Jonah 3:1–2</span><span class="day-badge badge-day">Day 15</span></div>
+        <p class="day-summary">"The word of the Lord came to Jonah a second time." God doesn't give up on his messenger, even after the fish.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Where has God given you a second chance to do something you ran from the first time?</li>
+          <li>What does it mean to you personally that God comes back — that he doesn't replace Jonah with someone more obedient?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Thank you for the second word, Lord. Thank you for not moving on to someone else. I hear you again — and I'm moving this time.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 15)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="16">
+        <div class="day-meta"><span class="passage">Jonah 3:3–4</span><span class="day-badge badge-day">Day 16</span></div>
+        <p class="day-summary">Jonah goes to Nineveh. He walks in one day's worth and preaches five words: "Forty days and Nineveh will be overthrown."</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Jonah's message is minimal — he doesn't even invite repentance, just announces judgment. And it works. How does that challenge your ideas about what God needs from you?</li>
+          <li>Where are you waiting to be more prepared, more eloquent, or more confident before you obey?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, use my small obedience. I don't have to have it all together. Send me with what I have, and you provide the results I could never manufacture on my own.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 16)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="17">
+        <div class="day-meta"><span class="passage">Jonah 3:5</span><span class="day-badge badge-day">Day 17</span></div>
+        <p class="day-summary">The people of Nineveh believe God. They fast, great and small alike. The whole city responds.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Have you ever underestimated what God could do in a person or place? What happened when you were wrong?</li>
+          <li>Who in your life have you mentally written off as unreachable? What does Nineveh say to that?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, break my categories. Expand my expectations of what you can do. Don't let me decide who's too far gone before you even get a chance.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 17)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="18">
+        <div class="day-meta"><span class="passage">Jonah 3:6–7</span><span class="day-badge badge-day">Day 18</span></div>
+        <p class="day-summary">The king of Nineveh hears, takes off his robe, puts on sackcloth, and sits in ashes. Then he issues a decree for the whole city to fast and cry out to God.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Repentance started with one man at the top and moved outward. Who has your humility influenced lately?</li>
+          <li>What would it look like for you to take off the "robe" — the status, the self-protection — and just be honest before God today?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">I take off the robe. No performance, no pretending. Here I am — just as I am. Let my honesty before you be something that gives others permission to be honest too.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 18)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="19">
+        <div class="day-meta"><span class="passage">Jonah 3:8–9</span><span class="day-badge badge-day">Day 19</span></div>
+        <p class="day-summary">"Who knows? God may turn and relent... so that we may not perish." The king doesn't demand mercy — he simply hopes for it.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>There's something honest and beautiful about "who knows?" — not demanding, just hoping. Where do you need that posture right now?</li>
+          <li>Do you approach God demanding your preferred outcome, or coming with open hands?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Who knows, God? You might. And I trust that you might be more merciful than I expect. I come with open hands, not a list of demands.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 19)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="20">
+        <div class="day-meta"><span class="passage">Jonah 3:10</span><span class="day-badge badge-day">Day 20</span></div>
+        <p class="day-summary">God saw their turning. And he relented from the disaster he had said he would do.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Does God's willingness to relent from judgment bother you or comfort you — and what does your answer reveal about your own heart?</li>
+          <li>Where do you need God's mercy right now? Can you actually receive it without guilt or conditions?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">You are slow to anger and abounding in steadfast love. I need that today. So does everyone around me. Thank you for relenting — even for the people I didn't think deserved it.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 20)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="21">
+        <div class="day-meta"><span class="passage">Reflection — Jonah 3</span><span class="day-badge badge-day">Day 21</span></div>
+        <p class="day-summary">Pause and pray over the whole chapter. One reluctant prophet. One city. The biggest revival in the Bible.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Where has God been forming you in the past three weeks — through the running, the fish, or the second chance?</li>
+          <li>Is there a "Nineveh" — a person or community — you feel God prompting you to move toward with what you know about him?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Lord, I don't want to be the reason your message is delayed. Use me — imperfect, uncertain, still being formed. You'll handle the results. I'll handle the going.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 21)">Mark done</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ WEEK 4 ═══════════════ -->
+  <section class="week" data-week="4">
+    <div class="week-header" onclick="toggleWeek(this)">
+      <div class="week-meta">
+        <span class="week-num">Week 4 · Jonah 4:1–11</span>
+        <span class="week-title">The Heart Behind the Obedience</span>
+      </div>
+      <div class="week-right">
+        <span class="week-count" id="wc-4">0 / 7</span>
+        <span class="week-chevron">▶</span>
+      </div>
+    </div>
+    <div class="week-body">
+
+      <div class="day-card" data-day="22">
+        <div class="day-meta"><span class="passage">Jonah 4:1–2</span><span class="day-badge badge-day">Day 22</span></div>
+        <p class="day-summary">Jonah is furious. He tells God: "This is exactly why I ran. I knew you'd do this — you're too gracious."</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Jonah obeyed — but his heart was never in it. Where in your life are you doing the right thing with completely the wrong motive?</li>
+          <li>Is there anyone whose repentance, blessing, or second chance quietly bothers you?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, don't just change my behavior — change my heart. I don't want to obey with clenched fists. I want to want what you want.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 22)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="23">
+        <div class="day-meta"><span class="passage">Jonah 4:3–4</span><span class="day-badge badge-day">Day 23</span></div>
+        <p class="day-summary">Jonah asks to die. "It is better for me to die than to live." God asks: "Is it right for you to be angry?"</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>God doesn't scold Jonah — he asks a question. How does God's patience with Jonah's tantrum speak to you?</li>
+          <li>Where are you holding on to an anger or disappointment with God that you've never actually named out loud?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, here's what I'm actually angry about. I know it might not be right. But I'd rather be honest with you than pretend it's not there. Help me work through it.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 23)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="24">
+        <div class="day-meta"><span class="passage">Jonah 4:5</span><span class="day-badge badge-day">Day 24</span></div>
+        <p class="day-summary">Jonah leaves the city and sits down east of it, waiting to see what will happen. He makes himself a shelter and waits.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Jonah is still hoping for judgment even after God showed mercy. Where are you holding out for an outcome God has already closed?</li>
+          <li>What would it look like to stop "waiting to see" and trust that God's decision is final — and good?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">I'm done sitting east of the city, God. Help me stop waiting for the judgment you've already chosen not to send. Your mercy is the answer — even when it's not the one I wanted.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 24)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="25">
+        <div class="day-meta"><span class="passage">Jonah 4:6–7</span><span class="day-badge badge-day">Day 25</span></div>
+        <p class="day-summary">God appoints a plant that gives Jonah shade. Jonah is very happy about the plant. Then God appoints a worm. The plant dies overnight.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>What small comfort are you more attached to than you realized — and what would happen if God took it away?</li>
+          <li>Why does losing a small thing sometimes hit harder than losing a big thing? What does that reveal?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, you give and take away. Blessed be your name — even when the plant dies. Don't let my comfort become the thing I'm actually living for.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 25)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="26">
+        <div class="day-meta"><span class="passage">Jonah 4:8–9</span><span class="day-badge badge-day">Day 26</span></div>
+        <p class="day-summary">A scorching east wind. The sun beats down. Jonah grows faint and again asks to die. "I am angry enough to die — over a plant."</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Jonah is more emotionally wrecked over a plant than over 120,000 people. Where are you more upset about your inconvenience than God's purposes for others?</li>
+          <li>What does discomfort reveal about what you're actually trusting in?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Lord, reorder what I care about. Don't let me spend my grief on plants when there are people. Use my discomfort to make me more like you.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 26)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="27">
+        <div class="day-meta"><span class="passage">Jonah 4:10–11</span><span class="day-badge badge-day">Day 27</span></div>
+        <p class="day-summary">"You cared about the plant... Should I not care about Nineveh — that great city, with more than 120,000 people?" The book ends there. No answer from Jonah.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>The book ends with a question, not a resolution. What's your answer?</li>
+          <li>God cares about people who "don't know their right hand from their left." Who does that description make you think of in your own life?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">Yes, Lord. You should care. And I want to care about what you care about — even the people I've been avoiding, even the city I didn't want to love. Make me someone who goes.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 27)">Mark done</button>
+      </div>
+
+      <div class="day-card" data-day="28">
+        <div class="day-meta"><span class="passage">Reflection — The Whole Book</span><span class="day-badge badge-day">Day 28</span></div>
+        <p class="day-summary">Jonah ran, repented (sort of), obeyed (reluctantly), and sulked (openly). God was patient through all of it. That's the whole story.</p>
+        <div class="section-label">Reflect</div>
+        <ul class="reflect-list">
+          <li>Where do you see yourself most in Jonah — the running, the fish, the reluctant obedience, or the anger at mercy?</li>
+          <li>What one thing has God been saying to you through this book that you don't want to forget?</li>
+        </ul>
+        <div class="section-label">Pray</div>
+        <div class="pray-block">God, I don't want to be someone who preaches your mercy and privately resents it. Make my inside match my outside. I'm still being formed — and I'm grateful you haven't given up on that.</div>
+        <button class="mark-btn undone" onclick="markDay(this, 28)">Mark done</button>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="all-done" id="all-done">
+    🐟 All 28 days complete. The book of Jonah is short. God's patience isn't.
+  </div>
+
+</main>
+
+<script>
+  const TOTAL = 28;
+  const WEEKS = 4;
+  const STORAGE_KEY = 'jonah-hc-done-v2';
+
+  function loadDone() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+  }
+
+  function saveDone(set) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); } catch {}
+  }
+
+  let done = loadDone();
+
+  function applyState() {
+    const cards = document.querySelectorAll('.day-card');
+    let completedCount = 0;
+
+    let todayDay = null;
+    const allDays = [...cards].map(c => parseInt(c.dataset.day));
+    for (const d of allDays) { if (!done.has(d)) { todayDay = d; break; } }
+
+    cards.forEach(card => {
+      const day = parseInt(card.dataset.day);
+      const badge = card.querySelector('.day-badge');
+      const btn = card.querySelector('.mark-btn');
+      const isDone = done.has(day);
+      const isToday = day === todayDay;
+
+      card.classList.toggle('is-done', isDone);
+      card.classList.toggle('is-today', isToday && !isDone);
+
+      if (isDone) {
+        completedCount++;
+        badge.textContent = '✓ Done';
+        badge.className = 'day-badge badge-done';
+        btn.textContent = 'Mark undone';
+        btn.className = 'mark-btn done-btn';
+      } else {
+        if (isToday) {
+          badge.textContent = 'Today';
+          badge.className = 'day-badge badge-today';
+        } else {
+          badge.textContent = 'Day ' + day;
+          badge.className = 'day-badge badge-day';
+        }
+        btn.textContent = 'Mark done';
+        btn.className = 'mark-btn undone';
+      }
+    });
+
+    const pct = Math.round((completedCount / TOTAL) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent =
+      completedCount === TOTAL
+        ? 'All 28 days complete 🎉'
+        : `${completedCount} of ${TOTAL} days complete`;
+
+    for (let w = 1; w <= WEEKS; w++) {
+      const start = (w - 1) * 7 + 1;
+      const end = w * 7;
+      let wDone = 0;
+      for (let d = start; d <= end; d++) { if (done.has(d)) wDone++; }
+      const el = document.getElementById('wc-' + w);
+      el.textContent = `${wDone} / 7`;
+      el.className = 'week-count' + (wDone === 7 ? ' complete' : '');
+    }
+
+    document.getElementById('all-done').classList.toggle('show', completedCount === TOTAL);
+  }
+
+  function markDay(btn, day) {
+    if (done.has(day)) {
+      done.delete(day);
+    } else {
+      done.add(day);
+      // Auto-open next week at week boundaries
+      const weekBoundaries = [7, 14, 21];
+      if (weekBoundaries.includes(day)) {
+        const nextWeek = (day / 7) + 1;
+        const weekEl = document.querySelector(`.week[data-week="${nextWeek}"]`);
+        if (weekEl && !weekEl.classList.contains('open')) weekEl.classList.add('open');
+      }
+    }
+    saveDone(done);
+    applyState();
+  }
+
+  function toggleWeek(header) {
+    header.closest('.week').classList.toggle('open');
+  }
+
+  function expandAll() {
+    document.querySelectorAll('.week').forEach(w => w.classList.add('open'));
+  }
+
+  function collapseAll() {
+    document.querySelectorAll('.week').forEach(w => w.classList.remove('open'));
+  }
+
+  function resetProgress() {
+    if (!confirm('Reset all progress? This cannot be undone.')) return;
+    done.clear();
+    saveDone(done);
+    applyState();
+  }
+
+  function goToToday() {
+    let todayDay = null;
+    const allDays = [...document.querySelectorAll('.day-card')].map(c => parseInt(c.dataset.day));
+    for (const d of allDays) { if (!done.has(d)) { todayDay = d; break; } }
+    if (!todayDay) return;
+    const card = document.querySelector(`.day-card[data-day="${todayDay}"]`);
+    if (!card) return;
+    card.closest('.week').classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+
+  applyState();
+</script>
+</body>
+</html>
